@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import pandas as pd
+
+def main():
+    parser = argparse.ArgumentParser(description='Agenda Importer')
+    parser.add_argument('agenda', type=str, required=True,
+                      help='Agenda file to load into the database')
+    
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.agenda):
+        print(f"Error: '{args.agenda}' is not a valid file")
+        return
+
+if __name__ == '__main__':
+    main()
