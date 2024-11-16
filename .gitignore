@@ -2,3 +2,4 @@
 *.db
 .DS_Store
 venv/
+interview_test.db

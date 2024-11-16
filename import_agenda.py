@@ -30,20 +30,23 @@ def load_tables(df):
                                     "location": "text", 
                                     "description": "text", 
                                     "speakers": "text", 
-                                    "parent_session": "integer FOREIGN KEY (parent_session) REFERENCES sessions(sessionid)"})
+                                    "parent_session": "integer",
+                                    "FOREIGN KEY (parent_session)": "REFERENCES sessions(sessionid)"})
     speaker_to_session =    db_table("speaker_to_session", 
                                     {"id": "integer PRIMARY KEY AUTOINCREMENT", 
                                     "speaker": "text", 
-                                    "sessionid": "integer FOREIGN KEY (sessionid) REFERENCES sessions(sessionid)"})
+                                    "sessionid": "integer",
+                                    "FOREIGN KEY (sessionid)": "REFERENCES sessions(sessionid)"})
     speaker_to_subsession = db_table("speaker_to_subsession", 
                                      {"id": "integer PRIMARY KEY AUTOINCREMENT", 
                                     "speaker": "text", 
-                                    "sessionid": "integer FOREIGN KEY (subsessionid) REFERENCES subsessions(subsessionid)"})
+                                    "subsessionid": "integer",
+                                    "FOREIGN KEY (subsessionid)": "REFERENCES subsessions(subsessionid)"})
 
     last_session_id = None  # latest inserted session each subsession refers to
 
     for _,row in df.iterrows():
-        session_or_sub = row["*Session or Sub-session(Sub)"]
+        session_or_sub = row["*Session or \nSub-session(Sub)"]
 
         data = {
             "date": row["*Date"],
@@ -54,6 +57,9 @@ def load_tables(df):
             "description": row["Description"],
             "speakers": row["Speakers"]
         }
+
+        # turn NaN vals to None
+        data = {k: (None if pd.isna(v) else v) for k, v in data.items()}
 
         speakers = []
         # check if there are speakers for this event
@@ -69,7 +75,7 @@ def load_tables(df):
             if last_session_id is None:
                 print(f"Error: Missing parent session for subsession {data['session_title']}")
                 continue
-
+            
             data["parent_session"] = last_session_id
             subsessionid = subsessions.insert(data)
             for speaker in speakers:
@@ -79,11 +85,11 @@ def load_tables(df):
     subsessions.close()
     speaker_to_session.close()
     speaker_to_subsession.close()
+    
 
 def read_agenda(agenda_file):
     try:
         df = pd.read_excel(agenda_file, skiprows=14, engine='xlrd')
-        print(df.columns.values)
         return df
     except Exception as e:
         print(f"Exception while reading the Excel file: {e}")
@@ -99,6 +105,8 @@ def main():
     
     df = read_agenda(args.agenda)
     load_tables(df)
+
+    print("SUCCESS! Finished running code")
 
 if __name__ == '__main__':
     main()
