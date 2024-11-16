@@ -6,19 +6,9 @@ from db_table import db_table
 '''
 TODO:
 Add comments in code
-Add Null or required attributes to table declarations?
+Add Null or required attributes to table declarations
+Adjust so names for columns aren't hardcoded are are instead dynamic based on excel column names
 '''
-
-'''
-    
-    users.insert({"name": "Simon Ninon", "email": "simon.ninon@whova.com"})
-    users.insert({"name": "Xinxin Jin", "email": "xinxin.jin@whova.com"})
-    users.insert({"name": "Congming Chen", "email": "congming.chen@whova.com"})
-    users.select()
-    users.update({'name': 'John'}, {'id':2})
-    users.select(['name', 'email'], {'id': 2})
-'''    
-
 
 def load_tables(df):
     sessions =              db_table("sessions", 
@@ -48,8 +38,39 @@ def load_tables(df):
                                      {"id": "integer PRIMARY KEY AUTOINCREMENT", 
                                     "speaker": "text", 
                                     "sessionid": "integer FOREIGN KEY (subsessionid) REFERENCES subsessions(subsessionid)"})
-    
-    # TODO: process each entry from the data and add it to the right table
+
+    last_session_id = None
+
+    for _,row in df.iterrows():
+        session_or_sub = row["*Session or Sub-session(Sub)"]
+
+        data = {
+            "date": row["*Date"],
+            "time_start": row["*Time Start"],
+            "time_end": row["*Time End"],
+            "session_title": row["*Session Title"],
+            "location": row["Room/Location"],
+            "description": row["Description"],
+            "speakers": row["Speakers"]
+        }
+        
+        speakers = [speaker.strip() for speaker in row["Speakers"].split(";")]
+
+        if session_or_sub == "Session":
+            last_session_id = sessions.insert(data)
+
+            for speaker in speakers:
+                speaker_to_session.insert({"speaker": speaker, "sessionid": last_session_id})
+
+        elif session_or_sub == "Sub":
+            if last_session_id is None:
+                print(f"Error: Missing parent session for subsession {data['session_title']}")
+                continue
+
+            data["parent_session"] = last_session_id
+            subsessionid = subsessions.insert(data)
+            for speaker in speakers:
+                speaker_to_subsession.insert({"speaker": speaker, "subsessionid": subsessionid})
 
     sessions.close()
     subsessions.close()
