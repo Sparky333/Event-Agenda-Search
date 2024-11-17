@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from db_table import db_table
+import schemas
 
 '''
 TODO:
@@ -10,7 +11,11 @@ Turn everything to lowercase when checking for match?
 def lookup_speaker(value):
     pass
 def lookup(column, value):
-    pass
+    sessions =              db_table("sessions", schemas.SESSIONS_SCHEMA)
+    subsessions =           db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
+    speaker_to_session =    db_table("speaker_to_session", schemas.SPEAKER_TO_SESSION_SCHEMA)
+    speaker_to_subsession = db_table("speaker_to_subsession", schemas.SPEAKER_TO_SUBSESSION_SCHEMA)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Agenda Lookup')

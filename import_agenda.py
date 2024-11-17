@@ -3,6 +3,8 @@ import argparse
 import os
 import pandas as pd
 from db_table import db_table
+import schemas
+
 '''
 TODO:
 Add comments in code
@@ -12,38 +14,10 @@ Check if we need to jump to the row "START YOUR AGENDA BELOW" or if data starts 
 '''
 
 def load_tables(df):
-    sessions =              db_table("sessions", 
-                                    {"sessionid": "integer PRIMARY KEY AUTOINCREMENT", 
-                                    "date": "text", 
-                                    "time_start": "text", 
-                                    "time_end": "text", 
-                                    "type": "text",
-                                    "session_title": "text", 
-                                    "location": "text", 
-                                    "description": "text", 
-                                    "speakers": "text"})
-    subsessions =           db_table("subsessions", 
-                                    {"subsessionid": "integer PRIMARY KEY AUTOINCREMENT", 
-                                    "date": "text", 
-                                    "time_start": "text", 
-                                    "time_end": "text", 
-                                    "type": "text",
-                                    "session_title": "text", 
-                                    "location": "text", 
-                                    "description": "text", 
-                                    "speakers": "text", 
-                                    "parent_session": "integer",
-                                    "FOREIGN KEY (parent_session)": "REFERENCES sessions(sessionid)"})
-    speaker_to_session =    db_table("speaker_to_session", 
-                                    {"id": "integer PRIMARY KEY AUTOINCREMENT", 
-                                    "speaker": "text", 
-                                    "sessionid": "integer",
-                                    "FOREIGN KEY (sessionid)": "REFERENCES sessions(sessionid)"})
-    speaker_to_subsession = db_table("speaker_to_subsession", 
-                                     {"id": "integer PRIMARY KEY AUTOINCREMENT", 
-                                    "speaker": "text", 
-                                    "subsessionid": "integer",
-                                    "FOREIGN KEY (subsessionid)": "REFERENCES subsessions(subsessionid)"})
+    sessions =              db_table("sessions", schemas.SESSIONS_SCHEMA)
+    subsessions =           db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
+    speaker_to_session =    db_table("speaker_to_session", schemas.SPEAKER_TO_SESSION_SCHEMA)
+    speaker_to_subsession = db_table("speaker_to_subsession", schemas.SPEAKER_TO_SUBSESSION_SCHEMA)
 
     last_session_id = None  # latest inserted session each subsession refers to
 
