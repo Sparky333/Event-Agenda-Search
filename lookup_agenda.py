@@ -5,7 +5,10 @@ import schemas
 
 '''
 TODO:
-Turn everything to lowercase when checking for match? 
+Add unit tests:
+title break should give len 7 results
+title breakfast should give len 3 results
+
 '''
 
 def lookup_speaker(value):
@@ -16,6 +19,8 @@ def lookup(column, value):
     speaker_to_session =    db_table("speaker_to_session", schemas.SPEAKER_TO_SESSION_SCHEMA)
     speaker_to_subsession = db_table("speaker_to_subsession", schemas.SPEAKER_TO_SUBSESSION_SCHEMA)
 
+    print(len(sessions.select(["date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {column: value})))
+
 
 def main():
     parser = argparse.ArgumentParser(description='Agenda Lookup')
@@ -23,7 +28,8 @@ def main():
     parser.add_argument('value', type=str, help='What value to match')
     args = parser.parse_args()
 
-    column = args.column.lower()
+    column = args.column.lower().strip()
+    value = args.value.lower().strip()
 
     if column not in ["date", "time_start", "time_end", "title", "location", "description", "speaker"]:
         print(f"{args.column} is an invalid lookup column. Column must be one of " + \
@@ -31,9 +37,9 @@ def main():
         return
     
     if column == "speaker":
-        lookup_speaker(args.value)
+        lookup_speaker(value)
     else:
-        lookup(column, args.value)
+        lookup(column, value)
 
 
 if __name__ == "__main__":

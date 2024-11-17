@@ -22,21 +22,21 @@ def load_tables(df):
     last_session_id = None  # latest inserted session each subsession refers to
 
     for _,row in df.iterrows():
-        session_or_sub = row["*Session or \nSub-session(Sub)"]
+        session_or_sub = row["*Session or \nSub-session(Sub)"].strip()
 
         data = {
             "date": row["*Date"],
             "time_start": row["*Time Start"],
             "time_end": row["*Time End"],
             "type": session_or_sub,
-            "session_title": row["*Session Title"],
+            "title": row["*Session Title"],
             "location": row["Room/Location"],
             "description": row["Description"],
             "speakers": row["Speakers"]
         }
 
         # turn NaN vals to None
-        data = {k: (None if pd.isna(v) else v) for k, v in data.items()}
+        data = {k: (None if pd.isna(v) else v.strip()) for k, v in data.items()}
 
         speakers = []
         # check if there are speakers for this event
@@ -50,7 +50,7 @@ def load_tables(df):
 
         elif session_or_sub == "Sub":
             if last_session_id is None:
-                print(f"Error: Missing parent session for subsession {data['session_title']}")
+                print(f"Error: Missing parent session for subsession {data['title']}")
                 continue
 
             data["parent_session"] = last_session_id
