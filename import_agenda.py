@@ -17,6 +17,7 @@ def load_tables(df):
                                     "date": "text", 
                                     "time_start": "text", 
                                     "time_end": "text", 
+                                    "type": "text",
                                     "session_title": "text", 
                                     "location": "text", 
                                     "description": "text", 
@@ -26,6 +27,7 @@ def load_tables(df):
                                     "date": "text", 
                                     "time_start": "text", 
                                     "time_end": "text", 
+                                    "type": "text",
                                     "session_title": "text", 
                                     "location": "text", 
                                     "description": "text", 
@@ -52,6 +54,7 @@ def load_tables(df):
             "date": row["*Date"],
             "time_start": row["*Time Start"],
             "time_end": row["*Time End"],
+            "type": session_or_sub,
             "session_title": row["*Session Title"],
             "location": row["Room/Location"],
             "description": row["Description"],
@@ -75,12 +78,12 @@ def load_tables(df):
             if last_session_id is None:
                 print(f"Error: Missing parent session for subsession {data['session_title']}")
                 continue
-            
+
             data["parent_session"] = last_session_id
             subsessionid = subsessions.insert(data)
             for speaker in speakers:
                 speaker_to_subsession.insert({"speaker": speaker, "subsessionid": subsessionid})
-
+                
     sessions.close()
     subsessions.close()
     speaker_to_session.close()
@@ -105,7 +108,7 @@ def main():
     
     df = read_agenda(args.agenda)
     load_tables(df)
-
+    
     print("SUCCESS! Finished running code")
 
 if __name__ == '__main__':

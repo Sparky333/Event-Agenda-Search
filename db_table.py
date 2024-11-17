@@ -53,6 +53,9 @@ class db_table:
         # { "id": "integer", "name": "text" } -> "id integer, name text"
         columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.items() ])
 
+        # Foreign key exists in the schema just for the create table logic; after which it should not be in the schema structure
+        self.schema = {k: v for k, v in self.schema.items() if 'foreign' not in k.lower()}
+
         # CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY, name text)
         #
         # Note that columns are formatted into the string without using sqlite safe substitution mechanism
