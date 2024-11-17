@@ -5,6 +5,8 @@ import schemas
 
 '''
 TODO:
+remove id from output since not wanted in output
+
 Add unit tests:
 title break should give len 7 results
 title breakfast should give len 3 results
@@ -15,12 +17,40 @@ search for debate should give one subsession
 '''
 
 def lookup_speaker(value):
-    pass
-def lookup(column, value):
     sessions              = db_table("sessions", schemas.SESSIONS_SCHEMA)
     subsessions           = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
     speaker_to_session    = db_table("speaker_to_session", schemas.SPEAKER_TO_SESSION_SCHEMA)
     speaker_to_subsession = db_table("speaker_to_subsession", schemas.SPEAKER_TO_SUBSESSION_SCHEMA)
+    output                = ""
+
+    matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
+
+    session_match = speaker_to_session.select(["sessionid"], {"speaker":value})
+    for sess in session_match:
+        sess_info = sessions.select(where={"sessionid":sess["sessionid"]})
+        for s in sess_info:
+            output += str(s) + "\n"
+
+        subsess_of_sess = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {"parent_session":sess["sessionid"]})
+        matchedSubsessionIDs = [subsess["subsessionid"] for subsess in subsess_of_sess]
+
+        for subsess in subsess_of_sess:
+            output += str(subsess) + "\n"
+
+    subsession_match = speaker_to_subsession.select(["subsessionid"], {"speaker":value})
+    for subsess in subsession_match:
+        if subsess["subsessionid"] in matchedSubsessionIDs:
+            continue
+        subsess_info = subsessions.select(where={"subsessionid":subsess["subsessionid"]})
+        for ss in subsess_info:
+            output += str(ss) + "\n"
+
+    print(output)
+
+
+def lookup(column, value):
+    sessions              = db_table("sessions", schemas.SESSIONS_SCHEMA)
+    subsessions           = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
     output                = ""
 
     # search for sessions that match
