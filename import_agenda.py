@@ -83,7 +83,7 @@ def load_tables(df):
             subsessionid = subsessions.insert(data)
             for speaker in speakers:
                 speaker_to_subsession.insert({"speaker": speaker, "subsessionid": subsessionid})
-                
+
     sessions.close()
     subsessions.close()
     speaker_to_session.close()
@@ -109,7 +109,7 @@ def main():
     df = read_agenda(args.agenda)
     load_tables(df)
     
-    print("SUCCESS! Finished running code")
+    print("SUCCESS!")
 
 if __name__ == '__main__':
     main()
