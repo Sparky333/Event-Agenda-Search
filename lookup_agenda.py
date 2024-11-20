@@ -2,6 +2,7 @@
 import argparse
 from db_table import db_table
 import schemas
+import os
 
 '''
 TODO:
@@ -73,8 +74,7 @@ def lookup(column, value):
         if subsess["subsessionid"] in matchedSubsessionIDs: 
             continue
 
-        for s in subsess:
-            output += str(s) + "\n"
+        output += str(subsess) + "\n"
 
     print(output)
 
@@ -82,6 +82,10 @@ def lookup(column, value):
     subsessions.close()
 
 def main():
+    if not os.path.isfile("interview_test.db"):
+        print("Error: please create database first by running import_agenda.py")
+        return
+
     parser = argparse.ArgumentParser(description='Agenda Lookup')
     parser.add_argument('column', type=str, help='What column to match value on')
     parser.add_argument('value', type=str, help='What value to match')
