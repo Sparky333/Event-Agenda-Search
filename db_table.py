@@ -37,7 +37,7 @@ class db_table:
         self.schema  = schema
         self.db_conn = sqlite3.connect(self.DB_NAME)
         
-        # code I added
+        # code I added: allow foreign keys
         self.db_conn.execute("PRAGMA foreign_keys = ON")
         
         # ensure the table is created
@@ -53,7 +53,7 @@ class db_table:
         # { "id": "integer", "name": "text" } -> "id integer, name text"
         columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.items() ])
 
-        # Foreign key exists in the schema just for the create table logic; after which it should not be in the schema structure
+        # code I added: Foreign key exists in the schema just for the create table logic; after which it should not be in the schema structure
         self.schema = {k: v for k, v in self.schema.items() if 'foreign' not in k.lower()}
 
         # CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY, name text)
@@ -87,6 +87,7 @@ class db_table:
         query                = "SELECT %s FROM %s" % (columns_query_string, self.name)
         # build where query string
         if where:
+            # code I added: Lower() since want to match "Lounge" with "lounge" for example
             where_query_string = [ "LOWER(%s) = LOWER('%s')" % (k,v) for k,v in where.items() ]
             query             += " WHERE " + ' AND '.join(where_query_string)
         
@@ -122,6 +123,7 @@ class db_table:
         values_query = ", ".join(["?" for _ in item.values()])
         values = [v if v is not None else None for v in item.values()]
 
+        # code I added: now special characters in description and other fields won't affect sql query
         query = "INSERT INTO %s (%s) VALUES (%s)" % (self.name, columns_query, values_query)
 
         # Note that columns are formatted into the string without using sqlite safe substitution mechanism
@@ -129,7 +131,7 @@ class db_table:
         # In the context of this project, this is fine (no risk of user malicious input)
         cursor = self.db_conn.cursor()
         
-        cursor.execute(query, values)  # Handle parameterized input 
+        cursor.execute(query, values)  # code I added: Handle parameterized input 
 
         cursor.close()
         self.db_conn.commit()

@@ -6,14 +6,6 @@ import schemas
 '''
 TODO:
 remove id from output since not wanted in output
-
-Add unit tests:
-title break should give len 7 results
-title breakfast should give len 3 results
-location "coral loune" should give 7
-location "lobby" should give 3 results
-
-search for debate should give one subsession
 '''
 
 def lookup_speaker(value):
@@ -46,6 +38,11 @@ def lookup_speaker(value):
             output += str(ss) + "\n"
 
     print(output)
+
+    sessions.close()
+    subsessions.close()
+    speaker_to_session.close()
+    speaker_to_subsession.close()
 
 
 def lookup(column, value):
@@ -80,6 +77,9 @@ def lookup(column, value):
             output += str(s) + "\n"
 
     print(output)
+
+    sessions.close()
+    subsessions.close()
 
 def main():
     parser = argparse.ArgumentParser(description='Agenda Lookup')
