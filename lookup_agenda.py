@@ -3,13 +3,34 @@ import argparse
 from db_table import db_table
 import schemas
 import os
+from tabulate import tabulate
+import textwrap
+import subprocess
 
-def print_sess_info(info):
+def wrap_text(info, width=50):
+    """
+    Wraps the text in all string fields of the dictionary to the given width.
+    Args:
+    - info (dict): The dictionary containing the data.
+    - width (int): The max width for the wrapped text.
+    
+    Returns:
+    - The dictionary with wrapped text in all string fields.
+    """
+    for field, value in info.items():
+        if isinstance(value, str):  # Check if the value is a string
+            wrapped_text = textwrap.fill(value, width)  # Wrap text at the specified width
+            info[field] = wrapped_text
+    return info
+
+def filter_sess_info(info):
     """
     removes sessionid and subsessionid keys before printing
     """
+    info = wrap_text(info)
     filtered_dict = {k: v for k, v in info.items() if k not in ["sessionid", "subsessionid"]}
-    print(filtered_dict)
+    return filtered_dict
+    #print(tabulate([filtered_dict], headers="keys", tablefmt="grid"))
 
 def find_subsess_of_sess(sessionid):
     subsessions = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
@@ -17,16 +38,19 @@ def find_subsess_of_sess(sessionid):
     subsess_of_sess = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {"parent_session":sessionid})
     matchedSubsessionIDs = [subsess["subsessionid"] for subsess in subsess_of_sess]
 
-    for subsess in subsess_of_sess:
-        print_sess_info(subsess)
+    output = []
 
-    return matchedSubsessionIDs
+    for subsess in subsess_of_sess:
+        output.append(filter_sess_info(subsess))
+
+    return (output, matchedSubsessionIDs)
 
 def lookup_speaker(value):
     sessions              = db_table("sessions", schemas.SESSIONS_SCHEMA)
     subsessions           = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
     speaker_to_session    = db_table("speaker_to_session", schemas.SPEAKER_TO_SESSION_SCHEMA)
     speaker_to_subsession = db_table("speaker_to_subsession", schemas.SPEAKER_TO_SUBSESSION_SCHEMA)
+    output = []
 
     matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
 
@@ -34,9 +58,12 @@ def lookup_speaker(value):
     for sess in session_match:
         sess_info = sessions.select(where={"sessionid":sess["sessionid"]})
         for s in sess_info:
-            print_sess_info(s)
+            output.append(filter_sess_info(s))
 
-        matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
+        #matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
+        subsess_output, matchedSubessIds = find_subsess_of_sess(sess["sessionid"])
+        output.extend(subsess_output)
+        matchedSubsessionIDs.extend(matchedSubessIds)
 
     matchedSubsessionIDs = set(matchedSubsessionIDs)
 
@@ -48,7 +75,10 @@ def lookup_speaker(value):
 
         subsess_info = subsessions.select(where={"subsessionid":subsess["subsessionid"]})
         for ss in subsess_info:
-            print_sess_info(ss)
+            output.append(filter_sess_info(ss))
+
+    table_str = tabulate(output, headers="keys", tablefmt="grid")
+    subprocess.run(["less", "-S"], input=table_str.encode())
 
     sessions.close()
     subsessions.close()
@@ -58,6 +88,7 @@ def lookup_speaker(value):
 def lookup(column, value):
     sessions              = db_table("sessions", schemas.SESSIONS_SCHEMA)
     subsessions           = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
+    output = []
 
     # search for sessions that match
     session_match = sessions.select(where = {column: value})
@@ -65,8 +96,10 @@ def lookup(column, value):
     matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
     # for each matched session, search for subsesions of that session
     for sess in session_match:
-        print_sess_info(sess)
-        matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
+        output.append(filter_sess_info(sess))
+        subsess_output, matchedSubessIds = find_subsess_of_sess(sess["sessionid"])
+        output.extend(subsess_output)
+        matchedSubsessionIDs.extend(matchedSubessIds)
 
     matchedSubsessionIDs = set(matchedSubsessionIDs)
 
@@ -77,7 +110,10 @@ def lookup(column, value):
         if subsess["subsessionid"] in matchedSubsessionIDs: 
             continue
 
-        print_sess_info(subsess)
+        output.append(filter_sess_info(subsess))
+
+    table_str = tabulate(output, headers="keys", tablefmt="grid")
+    subprocess.run(["less", "-S"], input=table_str.encode())
 
     sessions.close()
     subsessions.close()
