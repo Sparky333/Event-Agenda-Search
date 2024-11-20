@@ -9,12 +9,22 @@ TODO:
 remove id from output since not wanted in output
 '''
 
+def find_subsess_of_sess(sessionid):
+    subsessions = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
+
+    subsess_of_sess = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {"parent_session":sessionid})
+    matchedSubsessionIDs = [subsess["subsessionid"] for subsess in subsess_of_sess]
+
+    for subsess in subsess_of_sess:
+        print(str(subsess))
+
+    return matchedSubsessionIDs
+
 def lookup_speaker(value):
     sessions              = db_table("sessions", schemas.SESSIONS_SCHEMA)
     subsessions           = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
     speaker_to_session    = db_table("speaker_to_session", schemas.SPEAKER_TO_SESSION_SCHEMA)
     speaker_to_subsession = db_table("speaker_to_subsession", schemas.SPEAKER_TO_SUBSESSION_SCHEMA)
-    output                = ""
 
     matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
 
@@ -22,34 +32,30 @@ def lookup_speaker(value):
     for sess in session_match:
         sess_info = sessions.select(where={"sessionid":sess["sessionid"]})
         for s in sess_info:
-            output += str(s) + "\n"
+            print(str(s))
 
-        subsess_of_sess = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {"parent_session":sess["sessionid"]})
-        matchedSubsessionIDs = [subsess["subsessionid"] for subsess in subsess_of_sess]
+        matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
 
-        for subsess in subsess_of_sess:
-            output += str(subsess) + "\n"
+    matchedSubsessionIDs = set(matchedSubsessionIDs)
 
     subsession_match = speaker_to_subsession.select(["subsessionid"], {"speaker":value})
     for subsess in subsession_match:
+        # if subsess was already added because its parent session was matched, skip
         if subsess["subsessionid"] in matchedSubsessionIDs:
             continue
+
         subsess_info = subsessions.select(where={"subsessionid":subsess["subsessionid"]})
         for ss in subsess_info:
-            output += str(ss) + "\n"
-
-    print(output)
+            print(str(ss))
 
     sessions.close()
     subsessions.close()
     speaker_to_session.close()
     speaker_to_subsession.close()
 
-
 def lookup(column, value):
     sessions              = db_table("sessions", schemas.SESSIONS_SCHEMA)
     subsessions           = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
-    output                = ""
 
     # search for sessions that match
     session_match = sessions.select(where = {column: value})
@@ -57,13 +63,8 @@ def lookup(column, value):
     matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
     # for each matched session, search for subsesions of that session
     for sess in session_match:
-        output += str(sess) + "\n"
-
-        subsess_of_sess = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {"parent_session":sess["sessionid"]})
-        matchedSubsessionIDs = [subsess["subsessionid"] for subsess in subsess_of_sess]
-
-        for subsess in subsess_of_sess:
-            output += str(subsess) + "\n"
+        print(str(sess))
+        matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
 
     matchedSubsessionIDs = set(matchedSubsessionIDs)
 
@@ -74,9 +75,7 @@ def lookup(column, value):
         if subsess["subsessionid"] in matchedSubsessionIDs: 
             continue
 
-        output += str(subsess) + "\n"
-
-    print(output)
+        print(str(subsess))
 
     sessions.close()
     subsessions.close()
