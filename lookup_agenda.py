@@ -4,10 +4,12 @@ from db_table import db_table
 import schemas
 import os
 
-'''
-TODO:
-remove id from output since not wanted in output
-'''
+def print_sess_info(info):
+    """
+    removes sessionid and subsessionid keys before printing
+    """
+    filtered_dict = {k: v for k, v in info.items() if k not in ["sessionid", "subsessionid"]}
+    print(filtered_dict)
 
 def find_subsess_of_sess(sessionid):
     subsessions = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
@@ -16,7 +18,7 @@ def find_subsess_of_sess(sessionid):
     matchedSubsessionIDs = [subsess["subsessionid"] for subsess in subsess_of_sess]
 
     for subsess in subsess_of_sess:
-        print(str(subsess))
+        print_sess_info(subsess)
 
     return matchedSubsessionIDs
 
@@ -32,7 +34,7 @@ def lookup_speaker(value):
     for sess in session_match:
         sess_info = sessions.select(where={"sessionid":sess["sessionid"]})
         for s in sess_info:
-            print(str(s))
+            print_sess_info(s)
 
         matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
 
@@ -46,7 +48,7 @@ def lookup_speaker(value):
 
         subsess_info = subsessions.select(where={"subsessionid":subsess["subsessionid"]})
         for ss in subsess_info:
-            print(str(ss))
+            print_sess_info(ss)
 
     sessions.close()
     subsessions.close()
@@ -63,7 +65,7 @@ def lookup(column, value):
     matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
     # for each matched session, search for subsesions of that session
     for sess in session_match:
-        print(str(sess))
+        print_sess_info(sess)
         matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
 
     matchedSubsessionIDs = set(matchedSubsessionIDs)
@@ -75,7 +77,7 @@ def lookup(column, value):
         if subsess["subsessionid"] in matchedSubsessionIDs: 
             continue
 
-        print(str(subsess))
+        print_sess_info(subsess)
 
     sessions.close()
     subsessions.close()
