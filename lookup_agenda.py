@@ -9,30 +9,26 @@ import subprocess
 
 def wrap_text(info, width=50):
     """
-    Wraps the text in all string fields of the dictionary to the given width.
-    Args:
-    - info (dict): The dictionary containing the data.
-    - width (int): The max width for the wrapped text.
-    
-    Returns:
-    - The dictionary with wrapped text in all string fields.
+    Wraps all values in the dictionary to the given width for clean output
     """
     for field, value in info.items():
-        if isinstance(value, str):  # Check if the value is a string
+        if isinstance(value, str):
             wrapped_text = textwrap.fill(value, width)  # Wrap text at the specified width
             info[field] = wrapped_text
     return info
 
 def filter_sess_info(info):
     """
-    removes sessionid and subsessionid keys before printing
+    Removes sessionid and subsessionid keys before printing
     """
     info = wrap_text(info)
     filtered_dict = {k: v for k, v in info.items() if k not in ["sessionid", "subsessionid"]}
     return filtered_dict
-    #print(tabulate([filtered_dict], headers="keys", tablefmt="grid"))
 
 def find_subsess_of_sess(sessionid):
+    """
+    Given a session that matches the search criteria, finds all subsessions of that session
+    """
     subsessions = db_table("subsessions", schemas.SUBSESSIONS_SCHEMA)
 
     subsess_of_sess = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {"parent_session":sessionid})
@@ -60,7 +56,6 @@ def lookup_speaker(value):
         for s in sess_info:
             output.append(filter_sess_info(s))
 
-        #matchedSubsessionIDs.extend(find_subsess_of_sess(sess["sessionid"]))
         subsess_output, matchedSubessIds = find_subsess_of_sess(sess["sessionid"])
         output.extend(subsess_output)
         matchedSubsessionIDs.extend(matchedSubessIds)
@@ -77,6 +72,7 @@ def lookup_speaker(value):
         for ss in subsess_info:
             output.append(filter_sess_info(ss))
 
+    # print output in a table and allow the user to scroll
     table_str = tabulate(output, headers="keys", tablefmt="grid")
     subprocess.run(["less", "-S"], input=table_str.encode())
 
@@ -94,16 +90,18 @@ def lookup(column, value):
     session_match = sessions.select(where = {column: value})
 
     matchedSubsessionIDs = []   # used to ensure no duplicate subsessions are outputted
-    # for each matched session, search for subsesions of that session
+
     for sess in session_match:
         output.append(filter_sess_info(sess))
+
+        # for each matched session, search for subsesions of that session
         subsess_output, matchedSubessIds = find_subsess_of_sess(sess["sessionid"])
         output.extend(subsess_output)
         matchedSubsessionIDs.extend(matchedSubessIds)
 
     matchedSubsessionIDs = set(matchedSubsessionIDs)
 
-    # search for subsessions that match (their parent session didn't match)
+    # search for subsessions that match the criteria (their parent session didn't match)
     subsession_match = subsessions.select(["subsessionid","date", "time_start", "time_end", "type", "title", "location", "description", "speakers"], {column: value})
     for subsess in subsession_match:
         # if subsess was already added because its parent session was matched, skip
@@ -112,6 +110,7 @@ def lookup(column, value):
 
         output.append(filter_sess_info(subsess))
 
+    # print output in a table and allow the user to scroll
     table_str = tabulate(output, headers="keys", tablefmt="grid")
     subprocess.run(["less", "-S"], input=table_str.encode())
 
