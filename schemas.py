@@ -16,7 +16,7 @@ SUBSESSIONS_SCHEMA           = {"subsessionid": "integer PRIMARY KEY AUTOINCREME
                                 "title": "text NOT NULL",  
                                 "location": "text", 
                                 "description": "text", 
-                                "speakers": "text", 
+                                "speakers": "text",
                                 "parent_session": "integer NOT NULL",
                                 "FOREIGN KEY (parent_session)": "REFERENCES sessions(sessionid)"}
 
